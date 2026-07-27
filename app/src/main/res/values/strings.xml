@@ -1,0 +1,19 @@
+<resources>
+    <string name="app_name">AI Agents</string>
+    <string name="chat_title">Чат с AI</string>
+    <string name="settings_title">Настройки API</string>
+    <string name="agents_title">Агенты</string>
+    <string name="hint_message">Введите сообщение…</string>
+    <string name="send">Отправить</string>
+    <string name="multi_agent">Мульти-агент</string>
+    <string name="clear_chat">Очистить чат</string>
+    <string name="save_keys">Сохранить ключи</string>
+    <string name="gemini_key">Gemini API Key</string>
+    <string name="deepseek_key">DeepSeek API Key</string>
+    <string name="qwen_key">Qwen (DashScope) API Key</string>
+    <string name="mistral_key">Mistral API Key</string>
+    <string name="keys_saved">Ключи сохранены</string>
+    <string name="no_keys">Добавьте API ключи в настройках</string>
+    <string name="select_file">Выбрать файл</string>
+    <string name="file_selected">Файл выбран</string>
+</resources>

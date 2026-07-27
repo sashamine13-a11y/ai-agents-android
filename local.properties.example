@@ -1,0 +1,3 @@
+# Скопируйте в local.properties и заполните свои ключи
+# Не коммитьте local.properties в git!
+sdk.dir=/path/to/android/sdk
