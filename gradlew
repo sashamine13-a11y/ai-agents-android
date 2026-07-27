@@ -55,11 +55,9 @@ esac
 
 CLASSPATH=$APP_HOME/gradle/wrapper/gradle-wrapper.jar
 
-
 # Determine the Java command to use to start the JVM.
 if [ -n "$JAVA_HOME" ] ; then
     if [ -x "$JAVA_HOME/jre/sh/java" ] ; then
-        # IBM's JDK on AIX uses strange locations for the executables
         JAVACMD=$JAVA_HOME/jre/sh/java
     else
         JAVACMD=$JAVA_HOME/bin/java
@@ -85,16 +83,12 @@ fi
 if ! "$cygwin" && ! "$darwin" && ! "$nonstop" ; then
     case $MAX_FD in #(
       max*)
-        # In POSIX sh, ulimit -H is undefined. That's why the result is checked to see if it worked.
-        # shellcheck disable=SC2039,SC3045
         MAX_FD=$( ulimit -H -n ) ||
             warn "Could not query maximum file descriptor limit"
     esac
     case $MAX_FD in  #(
       '' | soft) :;; #(
       *)
-        # In POSIX sh, ulimit -n is undefined. That's why the result is checked to see if it worked.
-        # shellcheck disable=SC2039,SC3045
         ulimit -n "$MAX_FD" ||
             warn "Could not set maximum file descriptor limit to $MAX_FD"
     esac
@@ -137,8 +131,7 @@ if "$cygwin" || "$msys" ; then
         shift                   # out with the old
         set -- "$@" "$arg"      # in with the new
     done
-fi
-
+done
 
 # Add default JVM options here. You can also use JAVA_OPTS and GRADLE_OPTS to pass JVM options to this script.
 DEFAULT_JVM_OPTS='"-Xmx64m" "-Xms64m"'
@@ -156,8 +149,33 @@ fi
 
 # Use "xargs" to parse quoted args.
 #
-# With -n://services.gradle.org/distributions/gradle-8.7-bin.zip
-networkTimeout=10000
-validateDistributionUrl=true
-zipStoreBase=GRADLE_USER_HOME
-zipStorePath=wrapper/dists
+# With -n, it outputs one arg per line, with the quotes and backslashes removed.
+#
+# In Bash we could simply go:
+#
+#   readarray ARGS < <( xargs -n1 <<<"$var" ) &&
+#   set -- "${ARGS[@]}" "$@"
+#
+# but POSIX sh has neither arrays nor command substitution, so instead we
+# post-process each arg (as a line of input to sed) one by one.
+with_readline() {
+    while IFS= read -r line; do
+        # Remove leading/trailing whitespace
+        line=$(echo "$line" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
+        # Skip empty lines
+        [ -z "$line" ] && continue
+        set -- "$@" "$line"
+    done
+}
+
+# Collect all arguments for the java command;
+# following the shell quoting and substitution rules
+# shellcheck disable=SC2046
+set -- $(
+    printf '%s\n' "$DEFAULT_JVM_OPTS" "$JAVA_OPTS" "$GRADLE_OPTS" |
+    xargs -n1 |
+    sed 's/"/\"/g' |
+    with_readline
+) "$@"
+
+exec "$JAVACMD" "$@"
