@@ -27,94 +27,58 @@ fun ChatScreen(viewModel: MainViewModel = viewModel()) {
     val isLoading by viewModel.isLoading.collectAsState()
     val selectedAgent by viewModel.selectedAgent.collectAsState()
     val agents = viewModel.availableAgents
+    val floatingAgents = viewModel.floatingAgents
+    val appSettings by viewModel.appSettings.collectAsState()
     val listState = rememberLazyListState()
     val error by viewModel.error.collectAsState()
-
     var input by remember { mutableStateOf(TextFieldValue()) }
     var useMultiAgent by remember { mutableStateOf(false) }
+    var useFloating by remember { mutableStateOf(appSettings.enableFloatingAgents) }
 
-    val filePicker = rememberLauncherForActivityResult(
-        ActivityResultContracts.GetContent()
-    ) { uri: Uri? ->
+    val filePicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
         uri?.let { viewModel.attachFile(it) }
     }
 
-    LaunchedEffect(messages.size) {
-        if (messages.isNotEmpty()) {
-            listState.animateScrollToItem(messages.size - 1)
-        }
-    }
-
-    error?.let {
-        LaunchedEffect(it) {
-            viewModel.dismissError()
-        }
-    }
+    LaunchedEffect(messages.size) { if (messages.isNotEmpty()) listState.animateScrollToItem(messages.size - 1) }
+    error?.let { LaunchedEffect(it) { viewModel.dismissError() } }
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("AI Agents") },
-                actions = {
-                    IconButton(onClick = { viewModel.toggleSettings() }) {
-                        Icon(Icons.Default.Settings, contentDescription = "Настройки")
-                    }
-                    IconButton(onClick = { viewModel.clearChat() }) {
-                        Icon(Icons.Default.Delete, contentDescription = "Очистить")
-                    }
-                }
-            )
+            TopAppBar(title = { Text("AI Agents") }, actions = {
+                IconButton(onClick = { viewModel.toggleSettings() }) { Icon(Icons.Default.Settings, "Настройки") }
+                IconButton(onClick = { viewModel.clearChat() }) { Icon(Icons.Default.Delete, "Очистить") }
+            })
         },
         bottomBar = {
             Column {
-                if (agents.isNotEmpty()) {
-                    AgentSelector(
-                        agents = agents,
-                        selectedAgent = selectedAgent,
-                        onSelect = { viewModel.selectAgent(it) }
-                    )
+                if (floatingAgents.isNotEmpty() && appSettings.enableFloatingAgents) {
+                    Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        floatingAgents.forEach { agent ->
+                            AssistChip(onClick = {}, label = { Text(agent.name, style = MaterialTheme.typography.labelSmall) },
+                                leadingIcon = { Text(agent.icon) },
+                                colors = AssistChipDefaults.assistChipColors(leadingIconContentColor = MaterialTheme.colorScheme.primary))
+                        }
+                    }
                 }
-
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 12.dp, vertical = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
+                if (agents.isNotEmpty()) {
+                    AgentSelector(agents = agents, selectedAgent = selectedAgent, onSelect = { viewModel.selectAgent(it) })
+                }
+                Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Checkbox(
-                            checked = useMultiAgent,
-                            onCheckedChange = { useMultiAgent = it }
-                        )
-                        Text(
-                            "Мульти",
-                            style = MaterialTheme.typography.bodySmall
-                        )
+                        Checkbox(checked = useMultiAgent, onCheckedChange = { useMultiAgent = it })
+                        Text("Мульти", style = MaterialTheme.typography.bodySmall)
                     }
-
-                    IconButton(onClick = { filePicker.launch("*/*") }) {
-                        Icon(Icons.Default.AttachFile, contentDescription = "Файл")
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Checkbox(checked = useFloating, onCheckedChange = { useFloating = it })
+                        Text("Авто", style = MaterialTheme.typography.bodySmall)
                     }
-
-                    OutlinedTextField(
-                        value = input,
-                        onValueChange = { input = it },
-                        modifier = Modifier.weight(1f),
-                        placeholder = { Text("Введите сообщение…") },
-                        maxLines = 4,
-                        singleLine = false
-                    )
-
-                    IconButton(
-                        onClick = {
-                            if (input.text.isNotBlank()) {
-                                viewModel.sendMessage(input.text, useMultiAgent)
-                                input = TextFieldValue()
-                            }
-                        },
-                        enabled = !isLoading
-                    ) {
-                        Icon(Icons.Default.Send, contentDescription = "Отправить")
+                    IconButton(onClick = { filePicker.launch("*/*") }) { Icon(Icons.Default.AttachFile, "Файл") }
+                    OutlinedTextField(value = input, onValueChange = { input = it }, modifier = Modifier.weight(1f),
+                        placeholder = { Text("Введите сообщение…") }, maxLines = 4, singleLine = false)
+                    IconButton(onClick = { if (input.text.isNotBlank()) { viewModel.sendMessage(input.text, useMultiAgent, useFloating); input = TextFieldValue() } }, enabled = !isLoading) {
+                        Icon(Icons.Default.Send, "Отправить")
                     }
                 }
             }
@@ -123,39 +87,26 @@ fun ChatScreen(viewModel: MainViewModel = viewModel()) {
         Box(modifier = Modifier.padding(padding)) {
             LazyColumn(
                 state = listState,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 8.dp),
+                modifier = Modifier.fillMaxSize().padding(horizontal = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 items(messages) { msg ->
                     val isUser = msg.role == "user"
                     val isError = msg.role == "error"
                     val agentColor = if (!isUser && !isError) {
-                        agents.find { msg.content.startsWith("**${it.name}") 
+                        agents.find { msg.content.startsWith("**${it.name}")
                             || msg.content.startsWith("**🤖 ${it.name}")
-                            || msg.content.startsWith("**❌ ${it.name}") }?.color?.let { 
-                            androidx.compose.ui.graphics.Color(it) 
+                            || msg.content.startsWith("**❌ ${it.name}")
+                            || msg.content.startsWith("**✨ ${it.name}") }?.color?.let {
+                            androidx.compose.ui.graphics.Color(it)
                         }
                     } else null
-
-                    MessageBubble(
-                        message = msg.content,
-                        isUser = isUser,
-                        isError = isError,
-                        agentColor = agentColor
-                    )
+                    MessageBubble(message = msg.content, isUser = isUser, isError = isError, agentColor = agentColor)
                 }
-
                 if (isLoading) {
-                    item {
-                        Box(
-                            modifier = Modifier.fillMaxWidth(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            CircularProgressIndicator(modifier = Modifier.padding(16.dp))
-                        }
-                    }
+                    item { Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(modifier = Modifier.padding(16.dp))
+                    }}
                 }
             }
         }
