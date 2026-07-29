@@ -17,7 +17,19 @@ class DeepSeekApi(private val apiKey: String) {
     )
 
     @Serializable
-    data class DSResponse(val choices: List<Choice>)
+    data class DSResponse(
+        val choices: List<Choice>? = null,
+        val error: DSError? = null,
+        val id: String? = null,
+        val model: String? = null
+    )
+
+    @Serializable
+    data class DSError(
+        val message: String? = null,
+        val type: String? = null,
+        val code: String? = null
+    )
 
     @Serializable
     data class Choice(val message: ChatMessage)
@@ -31,7 +43,11 @@ class DeepSeekApi(private val apiKey: String) {
             setBody(DSRequest(messages = messages))
         }.body()
 
-        return response.choices.firstOrNull()?.message?.content 
+        response.error?.let { error ->
+            throw Exception("DeepSeek API error: ${error.message ?: error.code ?: "Unknown error"}")
+        }
+
+        return response.choices?.firstOrNull()?.message?.content
             ?: throw Exception("Пустой ответ от DeepSeek")
     }
 }
