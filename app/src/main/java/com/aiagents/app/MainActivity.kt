@@ -22,12 +22,11 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            AIAgentsTheme {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
-                ) {
-                    AppContent()
+            val viewModel: MainViewModel = viewModel()
+            val appSettings by viewModel.appSettings.collectAsState()
+            AIAgentsTheme(theme = appSettings.theme) {
+                Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+                    AppContent(viewModel = viewModel)
                 }
             }
         }
@@ -38,13 +37,12 @@ class MainActivity : ComponentActivity() {
 fun AppContent(viewModel: MainViewModel = viewModel()) {
     val showSettings by viewModel.showSettings.collectAsState()
     val apiKeys by viewModel.apiKeys.collectAsState()
-
+    val appSettings by viewModel.appSettings.collectAsState()
     ChatScreen(viewModel = viewModel)
-
     if (showSettings) {
         SettingsScreen(
-            currentKeys = apiKeys,
-            onSave = { viewModel.saveKeys(it) },
+            currentKeys = apiKeys, currentSettings = appSettings,
+            onSave = { keys, settings -> viewModel.saveKeys(keys); viewModel.saveAppSettings(settings) },
             onDismiss = { viewModel.toggleSettings() }
         )
     }
