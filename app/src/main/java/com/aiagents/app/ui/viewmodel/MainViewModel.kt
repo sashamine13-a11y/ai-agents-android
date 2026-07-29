@@ -65,9 +65,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 results.forEach { result ->
                     val name = engine.agents.find { it.id == result.agentId }?.name ?: result.agentId
                     val prefix = if (result.isError) "❌" else "🤖"
-                    _messages.value += ChatMessage(if (result.isError) "error" else "assistant", "**$prefix $name**
-
-${result.content}")
+                    _messages.value += ChatMessage(
+                        if (result.isError) "error" else "assistant",
+                        "**$prefix $name**\n\n${result.content}"
+                    )
                     result.toolCalls.forEach { executeToolCall(it) }
                 }
                 if (useFloating && _appSettings.value.enableFloatingAgents) {
@@ -75,9 +76,10 @@ ${result.content}")
                     engine.detectFloatingAgents(text, lastResponse).forEach { fId ->
                         val fResult = engine.executeFloatingAgent(fId, lastResponse, text)
                         val fAgent = engine.floatingAgents.find { it.id == fId }
-                        _messages.value += ChatMessage("assistant", "**✨ ${fAgent?.name ?: fId}**
-
-${fResult.content}")
+                        _messages.value += ChatMessage(
+                            "assistant",
+                            "**✨ ${fAgent?.name ?: fId}**\n\n${fResult.content}"
+                        )
                     }
                 }
             } catch (e: Exception) { _messages.value += ChatMessage("error", "❌ Ошибка: ${e.message}") }
@@ -90,16 +92,11 @@ ${fResult.content}")
             when (tool.toolName) {
                 "READ_FILE" -> {
                     val content = fileManager.readFile(Uri.parse(tool.parameters["path"]))
-                    _messages.value += ChatMessage("system", "📄 **Файл**
-```
-${content.take(2000)}
-```")
+                    _messages.value += ChatMessage("system", "📄 **Файл**\n```\n${content.take(2000)}\n```")
                 }
                 "LIST_DIR" -> {
                     val files = fileManager.listFiles(Uri.parse(tool.parameters["path"]))
-                    _messages.value += ChatMessage("system", "📁 **Файлы**
-${files.joinToString("
-") { "• ${it.name}" }}")
+                    _messages.value += ChatMessage("system", "📁 **Файлы**\n${files.joinToString("\n") { "• ${it.name}" }}")
                 }
                 else -> _messages.value += ChatMessage("system", "🔧 Команда: ${tool.toolName}")
             }
@@ -115,10 +112,7 @@ ${files.joinToString("
         try {
             val name = fileManager.getFileName(uri) ?: "файл"
             val content = fileManager.readFile(uri)
-            _messages.value += ChatMessage("user", "📎 **$name**
-```
-${content.take(500)}
-```")
+            _messages.value += ChatMessage("user", "📎 **$name**\n```\n${content.take(500)}\n```")
         } catch (e: Exception) { _error.value = "Не удалось прочитать файл: ${e.message}" }
     }
 }
