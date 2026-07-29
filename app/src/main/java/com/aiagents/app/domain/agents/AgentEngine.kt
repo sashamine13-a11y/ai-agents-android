@@ -57,11 +57,7 @@ class AgentEngine(private val repository: AiRepository) {
         val agent = agents.find { it.id == agentId }
             ?: return AgentResult(agentId, "Агент не найден", isError = true)
         val prompt = agent.floatingPrompt ?: agent.systemPrompt
-        val fullMessage = "Контекст: $context
-
-Оригинальный запрос: $originalMessage
-
-$prompt"
+        val fullMessage = "Контекст: $context\n\nОригинальный запрос: $originalMessage\n\n$prompt"
         return executeAgent(agentId, fullMessage)
     }
 
@@ -87,11 +83,7 @@ $prompt"
         val agentMentions = staticAgents.filter { it.id != "planner" }
             .filter { plan.contains("@${it.id}") || plan.contains(it.name) }
         for (agent in agentMentions) {
-            results.add(executeAgent(agent.id, "План: $plan
-
-Задача: $userRequest
-
-Выполни свою часть.",
+            results.add(executeAgent(agent.id, "План: $plan\n\nЗадача: $userRequest\n\nВыполни свою часть.",
                 listOf(ChatMessage("assistant", plan))))
         }
         if (agentMentions.isEmpty()) results.add(executeAgent("coder", userRequest))
@@ -100,7 +92,7 @@ $prompt"
 
     private fun parseToolCalls(text: String): List<ToolCall> {
         val calls = mutableListOf<ToolCall>()
-        val regex = "(EDIT_FILE|CREATE_FILE|READ_FILE|WRITE_FILE|LIST_DIR|ANALYZE)\|([^|]+)(?:\|(.+))?".toRegex(RegexOption.DOT_MATCHES_ALL)
+        val regex = "(EDIT_FILE|CREATE_FILE|READ_FILE|WRITE_FILE|LIST_DIR|ANALYZE)\\|([^|]+)(?:\\|(.+))?".toRegex(RegexOption.DOT_MATCHES_ALL)
         regex.findAll(text).forEach { match ->
             calls.add(ToolCall(match.groupValues[1], mapOf("path" to match.groupValues[2].trim(), "content" to match.groupValues[3].trim())))
         }
