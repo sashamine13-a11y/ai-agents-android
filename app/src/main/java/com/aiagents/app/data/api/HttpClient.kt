@@ -11,14 +11,16 @@ import kotlinx.serialization.json.Json
 object HttpClientProvider {
     val client = HttpClient(OkHttp) {
         install(ContentNegotiation) {
-            json(Json { 
-                ignoreUnknownKeys = true 
-                isLenient = true 
+            json(Json {
+                ignoreUnknownKeys = true
+                isLenient = true
                 prettyPrint = false
+                coerceInputValues = true
+                explicitNulls = false
             })
         }
-        install(Logging) { 
-            level = LogLevel.HEADERS 
+        install(Logging) {
+            level = LogLevel.HEADERS
             logger = Logger.DEFAULT
         }
         install(HttpTimeout) {
@@ -26,5 +28,14 @@ object HttpClientProvider {
             connectTimeoutMillis = 20000
             socketTimeoutMillis = 90000
         }
+        install(HttpResponseValidator) {
+            validateResponse { response ->
+                if (response.status.value >= 400) {
+                    val body = response.bodyAsText()
+                    throw Exception("HTTP ${response.status.value}: $body")
+                }
+            }
+        }
+        expectSuccess = false
     }
 }
