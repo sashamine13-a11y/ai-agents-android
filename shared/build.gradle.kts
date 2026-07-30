@@ -19,6 +19,8 @@ kotlin {
         val androidMain by getting {
             dependencies {
                 implementation("io.ktor:ktor-client-okhttp:2.3.3")
+                implementation("androidx.datastore:datastore-preferences:1.1.1")
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
             }
         }
         val desktopMain by getting {

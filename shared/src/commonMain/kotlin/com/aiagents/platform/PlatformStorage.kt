@@ -3,6 +3,7 @@ package com.aiagents.platform
 import com.aiagents.data.model.ApiKeys
 
 expect object PlatformStorage {
-    fun loadApiKeys(): ApiKeys
-    fun saveApiKeys(keys: ApiKeys)
+    fun init(context: Any?)
+    suspend fun loadApiKeys(): ApiKeys
+    suspend fun saveApiKeys(keys: ApiKeys)
 }

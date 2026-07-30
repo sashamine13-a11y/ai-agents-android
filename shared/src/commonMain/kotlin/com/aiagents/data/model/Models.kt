@@ -7,6 +7,7 @@ data class ChatMessage(val role: String, val content: String)
 
 enum class AiProvider { GEMINI, DEEPSEEK, QWEN, MISTRAL, OPENROUTER, GROK }
 
+@Serializable
 data class AgentConfig(
     val id: String,
     val name: String,
@@ -20,6 +21,7 @@ data class AgentConfig(
     val floatingPrompt: String? = null
 )
 
+@Serializable
 data class AgentResult(
     val agentId: String,
     val content: String,
@@ -27,8 +29,10 @@ data class AgentResult(
     val isError: Boolean = false
 )
 
+@Serializable
 data class ToolCall(val toolName: String, val parameters: Map<String, String>)
 
+@Serializable
 data class ApiKeys(
     val gemini: String = "",
     val deepseek: String = "",
@@ -53,6 +57,7 @@ enum class AppLanguage(val code: String, val displayName: String) {
     FRENCH("fr", "Français")
 }
 
+@Serializable
 data class AppSettings(
     val theme: AppTheme = AppTheme.SYSTEM,
     val language: AppLanguage = AppLanguage.SYSTEM,
