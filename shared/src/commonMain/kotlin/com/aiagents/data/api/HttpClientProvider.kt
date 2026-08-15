@@ -1,15 +1,16 @@
 package com.aiagents.data.api
 
 import io.ktor.client.*
-import io.ktor.client.engine.cio.*
+import io.ktor.client.engine.*
 import io.ktor.client.plugins.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.plugins.logging.*
+import io.ktor.client.request.*
+import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.json.Json
 
 object HttpClientProvider {
-    // For common code we provide a function to build client per-platform. Actual engine is chosen in platform-specific modules.
     fun createClient(engine: HttpClientEngineFactory<*>): HttpClient = HttpClient(engine) {
         install(ContentNegotiation) {
             json(Json {
@@ -36,6 +37,9 @@ object HttpClientProvider {
                     throw Exception("HTTP ${response.status.value}: $body")
                 }
             }
+        }
+        defaultRequest {
+            header(HttpHeaders.ContentType, ContentType.Application.Json)
         }
         expectSuccess = false
     }
