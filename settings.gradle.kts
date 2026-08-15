@@ -15,4 +15,4 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "AIAgents"
-include(":app")
+include(":app", ":shared")
